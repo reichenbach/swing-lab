@@ -31,6 +31,13 @@
   </section>
 </div>
 
+{% if m.notes %}
+<section class="card">
+  <h3>Read this first</h3>
+  {% for note in m.notes %}<p class="muted">{{ note }}</p>{% endfor %}
+</section>
+{% endif %}
+
 <section class="card">
   <h3>Findings</h3>
   {% for f in report.findings %}

@@ -103,7 +103,9 @@ def create_app(db: str | None = None, output_root: str = "output",
         row = library.get(swing_id, app.config["DB"])
         if not row or not row.get("out_dir"):
             abort(404)
-        return send_from_directory(row["out_dir"], filename)
+        # Flask resolves relative paths against the package, not the working
+        # directory, and uploads store a relative out_dir.
+        return send_from_directory(Path(row["out_dir"]).resolve(), filename)
 
     @app.template_filter("ts")
     def _ts(value):

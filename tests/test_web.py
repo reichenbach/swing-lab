@@ -8,6 +8,7 @@ files in the swing's out_dir, and exercise every route via Flask's test client.
 
 from __future__ import annotations
 
+import os
 import tempfile
 from pathlib import Path
 
@@ -71,6 +72,29 @@ def test_web_routes():
     print("Web OK — index, swing, player, media, 404s, upload validation.")
 
 
+def test_media_and_notes_with_relative_out_dir():
+    # Real uploads store a relative out_dir, which used to 404 the video and plot.
+    tmp = Path(tempfile.mkdtemp())
+    (tmp / "output" / "swings" / "abc").mkdir(parents=True)
+    (tmp / "output" / "swings" / "abc" / "metrics.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+    report = _report("Alex")
+    report["metrics"]["notes"] = ["Camera angle is not detected."]
+
+    previous = os.getcwd()
+    os.chdir(tmp)
+    try:
+        db = "swings.db"
+        sid = library.record("Alex", "a.mp4", {"attack_angle_deg": 6.0}, db=db,
+                             created_at=1000, report=report,
+                             out_dir="output/swings/abc")
+        c = create_app(db=db, output_root="output").test_client()
+        assert c.get(f"/media/{sid}/metrics.png").status_code == 200
+        assert b"Camera angle is not detected." in c.get(f"/swing/{sid}").data
+    finally:
+        os.chdir(previous)
+
+
 if __name__ == "__main__":
     test_web_routes()
+    test_media_and_notes_with_relative_out_dir()
     print("\nAll web checks passed.")
