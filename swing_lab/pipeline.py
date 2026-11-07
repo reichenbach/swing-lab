@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 
 from .coach import coaching_report
-from .diagnose import Finding, diagnose
+from .diagnose import VIEWS, Finding, diagnose
 from .metrics import SwingMetrics, compute
 from .overlay import render_plot, render_video
 from .pose import get_backend
@@ -40,7 +40,9 @@ def gate_findings(findings: list[Finding], warning: str | None) -> list[Finding]
     """Drop every finding to low confidence when detection was poor."""
     if not warning:
         return findings
-    return [dataclasses.replace(f, confidence="low (poor detection)") for f in findings]
+    return [f if f.severity == "info"
+            else dataclasses.replace(f, confidence="low (poor detection)")
+            for f in findings]
 
 
 @dataclass
@@ -70,7 +72,10 @@ def analyze_video(video: str, out_dir: str, *, pose_model: str = "yolo11n-pose.p
                   bat_model: str | None = None, ball_model: str | None = None,
                   contact_frame: int | None = None, render_annotated: bool = True,
                   coach: bool = True, player: str | None = None,
-                  capture_fps: float | None = None) -> AnalysisResult:
+                  capture_fps: float | None = None,
+                  view: str | None = None) -> AnalysisResult:
+    if view is not None and view not in VIEWS:
+        raise ValueError(f"view must be one of {sorted(VIEWS)} or None, got {view!r}")
     video = str(video)
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -88,7 +93,7 @@ def analyze_video(video: str, out_dir: str, *, pose_model: str = "yolo11n-pose.p
     m = compute(seq, contact_frame=contact_frame,
                 bat_track=bat_track, ball_track=ball_track)
     warning = detection_warning(detected)
-    findings = gate_findings(diagnose(m), warning)
+    findings = gate_findings(diagnose(m, view=view), warning)
 
     outputs: dict = {"plot": None, "annotated_video": None, "coaching": None}
     outputs["plot"] = render_plot(m, str(out / "metrics.png"))
@@ -110,6 +115,7 @@ def analyze_video(video: str, out_dir: str, *, pose_model: str = "yolo11n-pose.p
     report = {
         "video": video,
         "player": player,
+        "view": view,
         "detected_frac": detected,
         "warning": warning,
         "metrics": _scalar_metrics(m),

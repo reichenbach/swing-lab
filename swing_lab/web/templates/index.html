@@ -6,8 +6,15 @@
     <label>Player
       <input type="text" name="player" placeholder="Player name" required>
     </label>
-    <label>Swing video (side-on, slow-mo works best)
+    <label>Swing video (slow-mo works best)
       <input type="file" name="video" accept="video/*" required>
+    </label>
+    <label>Where was the camera?
+      <select name="view">
+        <option value="">Not sure (show numbers, no grades)</option>
+        <option value="side">Side-on (grades attack angle, posture, head)</option>
+        <option value="face">Face-on (grades hip lead and separation)</option>
+      </select>
     </label>
     <label>How was it filmed? (frame rate)
       <select name="capture_fps">

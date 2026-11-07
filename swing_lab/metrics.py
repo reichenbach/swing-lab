@@ -262,8 +262,9 @@ def compute(seq: PoseSequence, contact_frame: int | None = None,
         "player against their own baseline."
     )
     notes.append(
-        "Camera angle is not detected. Attack angle only means something from a "
-        "side-on camera; rotation and separation only from a face-on camera."
+        "Camera angle is not detected automatically. Attack angle, posture and "
+        "head movement are graded only for side-on clips; rotation and separation "
+        "only for face-on clips."
     )
     if bat_tracked:
         notes.append("Attack angle is from the tracked bat path (not the hand proxy).")

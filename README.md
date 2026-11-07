@@ -63,7 +63,7 @@ first run.
 ## Usage
 
 ```bash
-PYTHONPATH=. .venv/bin/python analyze.py data/swing.mp4
+PYTHONPATH=. .venv/bin/python analyze.py data/swing.mp4 --view side
 
 # Set the true capture rate for phone slow motion
 PYTHONPATH=. .venv/bin/python analyze.py data/swing.mp4 --fps 240
@@ -93,6 +93,10 @@ Camera angle decides which numbers mean anything:
 
 Use a fixed tripod, the same spot each time, 120-240 fps, and one hitter in frame.
 
+Tell the tool which you used, with `--view side` or `--view face` or on the upload
+form. It grades only what that angle can show. Without it, you get the numbers and
+no grades.
+
 ## What it measures
 
 - Hip and shoulder rotation, and hip-shoulder separation (face-on)
@@ -107,8 +111,8 @@ Use a fixed tripod, the same spot each time, 120-240 fps, and one hitter in fram
 
 - One camera gives 2D projections of 3D motion. It suits comparing a player to
   their own baseline, not lab-grade absolute numbers.
-- Camera angle isn't detected. Attack angle only means something from a side-on
-  camera, and rotation and separation only from a face-on camera.
+- Camera angle isn't detected automatically, so you have to set it. Grades are
+  only as good as that setting.
 - Contact is estimated from peak hand speed, which can land a few frames off.
   Use `--contact-frame` if you know the true frame.
 - If the hitter is detected in under 70% of frames, the report shows a warning

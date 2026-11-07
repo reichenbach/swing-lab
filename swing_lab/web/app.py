@@ -18,6 +18,7 @@ from flask import (
 )
 
 from .. import compare, library
+from ..diagnose import VIEWS
 from ..pipeline import analyze_video
 
 ALLOWED = {".mp4", ".mov", ".m4v", ".avi"}
@@ -68,9 +69,12 @@ def create_app(db: str | None = None, output_root: str = "output",
         except ValueError:
             capture_fps = None
 
+        view = request.form.get("view")
+        view = view if view in VIEWS else None
+
         out_dir = Path(app.config["OUTPUT_ROOT"]) / "swings" / sid
         result = analyze_video(str(upath), str(out_dir), player=player,
-                               capture_fps=capture_fps)
+                               capture_fps=capture_fps, view=view)
 
         prior = library.baseline(player, app.config["DB"])
         scalars = library.scalars_from_metrics(result.metrics)

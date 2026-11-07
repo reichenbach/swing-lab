@@ -48,6 +48,7 @@ video, .plot { width: 100%; border-radius: 8px; background: #000; }
 .finding.sev-ok { border-color: var(--ok); }
 .finding.sev-watch { border-color: var(--watch); }
 .finding.sev-flag { border-color: var(--flag); }
+.finding.sev-info { border-color: var(--line); }
 .conf { color: var(--muted); font-size: 12px; }
 .drill { margin-top: 4px; font-size: 14px; }
 .coaching { white-space: pre-wrap; font: 14px/1.55 ui-monospace, Menlo, monospace;

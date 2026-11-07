@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from swing_lab.diagnose import VIEWS
 from swing_lab.pipeline import analyze_video
 
 
@@ -28,10 +29,13 @@ def main() -> None:
                     help="true capture fps (e.g. 120/240 for iPhone slo-mo). "
                          "Overrides the container's reported fps, which is often "
                          "wrong for exported slow-motion.")
+    ap.add_argument("--view", choices=sorted(VIEWS), default=None,
+                    help="camera angle. Only what this angle can show gets graded; "
+                         "without it, numbers are shown with no verdict.")
     ap.add_argument("--bat-model", default=None,
-                    help="trained bat keypoint weights (Phase 1; see training/)")
+                    help="trained bat keypoint weights (see training/)")
     ap.add_argument("--ball-model", default=None,
-                    help="trained ball detector weights (Phase 1; see training/)")
+                    help="trained ball detector weights (see training/)")
     ap.add_argument("--no-video", action="store_true", help="skip annotated-video render")
     ap.add_argument("--player", default=None, help="player name for the coaching report")
     ap.add_argument("--no-coach", action="store_true",
@@ -52,6 +56,7 @@ def main() -> None:
         bat_model=args.bat_model, ball_model=args.ball_model,
         contact_frame=args.contact_frame, render_annotated=not args.no_video,
         coach=not args.no_coach, player=args.player, capture_fps=args.fps,
+        view=args.view,
     )
     m, findings = result.metrics, result.findings
     print(f"  {m.n_frames} frames @ {m.fps:.0f}fps, athlete detected "
@@ -95,7 +100,8 @@ def main() -> None:
         mark = {"ok": "✅", "watch": "🟡", "flag": "🔴"}.get(f.severity, "•")
         print(f"{mark} {f.flaw}  [{f.confidence}]")
         print(f"    why : {f.evidence}")
-        print(f"    drill: {f.drill}")
+        if f.drill:
+            print(f"    drill: {f.drill}")
     print("-" * 64)
     for note in m.notes:
         print(f"  note: {note}")

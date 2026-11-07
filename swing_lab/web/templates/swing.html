@@ -19,6 +19,7 @@
     <img class="plot" src="{{ url_for('media', swing_id=row.id, filename='metrics.png') }}"
          alt="metrics plot">
     <table class="kv">
+      <tr><td>camera</td><td>{{ {'side': 'side-on', 'face': 'face-on'}.get(report.view, 'not set') }}</td></tr>
       <tr><td>contact</td><td>frame {{ m.contact_frame }} ({{ m.contact_method }})</td></tr>
       <tr><td>attack angle</td><td>{{ '%+.0f'|format(m.attack_angle_deg or 0) }}°</td></tr>
       <tr><td>max separation</td><td>{{ '%+.0f'|format(m.max_separation or 0) }}°</td></tr>
@@ -44,7 +45,7 @@
     <div class="finding sev-{{ f.severity }}">
       <strong>{{ f.flaw }}</strong> <span class="conf">{{ f.confidence }}</span>
       <div class="muted">{{ f.evidence }}</div>
-      <div class="drill">Drill: {{ f.drill }}</div>
+      {% if f.drill %}<div class="drill">Drill: {{ f.drill }}</div>{% endif %}
     </div>
   {% endfor %}
 </section>

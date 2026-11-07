@@ -34,7 +34,7 @@ def test_template_report():
         os.environ.pop(k, None)
 
     m = compute(_pose())
-    findings = diagnose(m)
+    findings = diagnose(m, view="face")
 
     # Prompt builder produces a sane two-message chat payload.
     msgs = build_messages(m, findings, player="Alex")

@@ -11,7 +11,7 @@ bat tracking to call reliably — those findings say so rather than bluffing.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .metrics import SwingMetrics
 
@@ -28,13 +28,46 @@ THRESHOLDS = {
 @dataclass
 class Finding:
     flaw: str
-    severity: str          # "ok" | "watch" | "flag"
-    confidence: str        # "high" | "medium" | "low (needs bat tracking)"
+    severity: str          # "ok" | "watch" | "flag" | "info" (shown, not judged)
+    confidence: str        # "high" | "medium" | "low (...)" | "not judged"
     evidence: str
     drill: str
 
 
-def diagnose(m: SwingMetrics, t: dict | None = None) -> list[Finding]:
+# A single camera can only judge some things. Each rule maps findings to the view
+# that can support them, a neutral label, and the plain measurement to show when
+# the view can't, so a number never carries a verdict it hasn't earned.
+VIEWS = {"side": "side-on", "face": "face-on"}
+_VIEW_RULES = (
+    (("Limited hip lead", "Hip lead"), "face", "Hip lead / sequence",
+     lambda m: (f"Separation {abs(m.max_separation):.0f}deg; pelvis, torso and hands "
+                f"peak at frames {m.pelvis_peak_frame}, {m.torso_peak_frame} and "
+                f"{m.hands_peak_frame}.")),
+    (("Steep uppercut", "Chopping down", "Attack angle"), "side", "Attack angle",
+     lambda m: f"{'Bat' if m.bat_tracked else 'Hand'}-path angle {m.attack_angle_deg:+.0f}deg."),
+    (("Back-shoulder drop",), "side", "Back-shoulder drop",
+     lambda m: f"Shoulder line moved {m.shoulder_tilt_deg:+.0f}deg vs setup."),
+    (("Excess head movement",), "side", "Head movement",
+     lambda m: f"Head travels {m.head_drift_ratio:.2f}x shoulder width."),
+)
+
+
+def _apply_view(f: Finding, m: SwingMetrics, view: str | None) -> Finding:
+    """Turn a finding into a plain measurement if this camera can't support it."""
+    for prefixes, needs, label, measure in _VIEW_RULES:
+        if f.flaw.startswith(prefixes) and view != needs:
+            why = ("this clip's camera angle wasn't set" if view is None
+                   else f"this clip was marked {VIEWS[view]}")
+            return replace(f, flaw=label, severity="info", confidence="not judged",
+                           evidence=(f"{measure(m)} Only meaningful from a "
+                                     f"{VIEWS[needs]} camera; {why}."),
+                           drill="")
+    return f
+
+
+def diagnose(m: SwingMetrics, t: dict | None = None,
+             view: str | None = None) -> list[Finding]:
+    """Judge a swing. `view` is "side", "face", or None if the angle is unknown."""
     t = {**THRESHOLDS, **(t or {})}
     out: list[Finding] = []
 
@@ -86,8 +119,8 @@ def diagnose(m: SwingMetrics, t: dict | None = None) -> list[Finding]:
                      f"{m.on_plane_ratio:.2f}.")
         else:
             conf = "low (needs bat tracking)"
-            extra = (" True rollover (early wrist roll) needs the Phase-1 bat "
-                     "tracker to confirm — this is the hands-path proxy only.")
+            extra = (" True rollover (early wrist roll) needs bat tracking to "
+                     "confirm; this uses the hand path only.")
         out.append(Finding(
             flaw="Chopping down (rollover / weak grounder risk)",
             severity="flag",
@@ -147,13 +180,13 @@ def diagnose(m: SwingMetrics, t: dict | None = None) -> list[Finding]:
     else:
         out.append(Finding(
             flaw="Timing vs pitch",
-            severity="watch", confidence="low (needs ball tracking)",
+            severity="info", confidence="not judged",
             evidence=(
                 f"Estimated contact at frame {m.contact_frame} "
                 f"({m.contact_frame / m.fps:.2f}s) via {m.contact_method}. Judging "
-                "early/late vs the pitch needs the Phase-1 ball track."
+                "early or late vs the pitch needs ball tracking."
             ),
-            drill="Front-toss timing ladders once ball tracking lands.",
+            drill="",
         ))
 
-    return out
+    return [_apply_view(f, m, view) for f in out]

@@ -68,7 +68,8 @@ def build_messages(m: SwingMetrics, findings: list[Finding],
         "1. One upbeat sentence on what looks good.\n"
         "2. The single most important thing to fix first, in plain language.\n"
         "3. 2-3 drills with a one-line cue each.\n"
-        "Keep it under ~200 words. Note any low-confidence items honestly."
+        "Keep it under ~200 words. Note any low-confidence items honestly. "
+        "Items marked info were not judged: give no advice about them."
     )
     return [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -104,14 +105,18 @@ def _template_report(m: SwingMetrics, findings: list[Finding],
                      player: str | None) -> str:
     name = player or "Hitter"
     goods = [f for f in findings if f.severity == "ok"]
-    flags = [f for f in findings if f.severity == "flag"]
-    watches = [f for f in findings if f.severity == "watch"]
+    issues = [f for f in findings if f.severity == "flag"]
+    issues += [f for f in findings if f.severity == "watch"]
+    firm = [f for f in issues if not f.confidence.startswith("low")]
+    unsure = [f for f in issues if f.confidence.startswith("low")]
+    not_judged = [f for f in findings if f.severity == "info"]
 
     lines = [f"# Swing Report — {name}", ""]
     if goods:
         lines += ["**What's working:** " + "; ".join(g.flaw for g in goods), ""]
 
-    priority = flags[0] if flags else (watches[0] if watches else None)
+    # Only something the clip can actually support gets to be the top priority.
+    priority = firm[0] if firm else None
     if priority:
         lines += [
             "## Fix this first",
@@ -121,15 +126,31 @@ def _template_report(m: SwingMetrics, findings: list[Finding],
             "",
         ]
 
-    rest = [f for f in (flags + watches) if f is not priority]
+    rest = [f for f in firm if f is not priority]
     if rest:
         lines += ["## Also work on"]
         for f in rest:
             lines += [f"- **{f.flaw}** — {f.drill}"]
         lines += [""]
 
-    lines += ["---", "_Auto-generated from swing metrics. "
-              "Low-confidence items improve once bat/ball tracking is trained._"]
+    if unsure:
+        lines += ["## Worth a look (low confidence)"]
+        for f in unsure:
+            lines += [f"- **{f.flaw}** — {f.evidence}"]
+        lines += [""]
+
+    if not (goods or firm or unsure):
+        lines += ["**Nothing on this clip could be graded.** Set the camera angle "
+                  "to grade what that angle can show.", ""]
+
+    if not_judged:
+        lines += ["## Measured, not judged"]
+        for f in not_judged:
+            lines += [f"- **{f.flaw}** — {f.evidence}"]
+        lines += [""]
+
+    lines += ["---", "_Auto-generated from swing metrics. Thresholds are "
+              "uncalibrated starting points._"]
     return "\n".join(lines)
 
 
