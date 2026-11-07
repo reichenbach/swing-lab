@@ -1,0 +1,12 @@
+# Ball dataset — Ultralytics DETECT format.
+# One class "ball"; box center = ball position per frame.
+# Fill `path` in after labeling/export (see README.md). Expected layout:
+#   images/train/*.jpg   labels/train/*.txt
+#   images/val/*.jpg     labels/val/*.txt
+
+path: ../data/ball_dataset     # dataset root (edit me)
+train: images/train
+val: images/val
+
+names:
+  0: ball

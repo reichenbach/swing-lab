@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Swing #{{ row.id }} — {{ row.player }}{% endblock %}
+{% block content %}
+{% set m = report.metrics or {} %}
+<a class="back" href="{{ url_for('player', name=row.player) }}">← {{ row.player }}</a>
+<h2>Swing #{{ row.id }} — {{ row.player }}</h2>
+<p class="muted">{{ row.created_at|ts }}</p>
+{% if report.warning %}
+<section class="card finding sev-flag" role="alert"><strong>{{ report.warning }}</strong></section>
+{% endif %}
+
+<div class="grid">
+  <section class="card">
+    <h3>Video</h3>
+    <video controls src="{{ url_for('media', swing_id=row.id, filename='annotated.mp4') }}"></video>
+  </section>
+  <section class="card">
+    <h3>Metrics</h3>
+    <img class="plot" src="{{ url_for('media', swing_id=row.id, filename='metrics.png') }}"
+         alt="metrics plot">
+    <table class="kv">
+      <tr><td>contact</td><td>frame {{ m.contact_frame }} ({{ m.contact_method }})</td></tr>
+      <tr><td>attack angle</td><td>{{ '%+.0f'|format(m.attack_angle_deg or 0) }}°</td></tr>
+      <tr><td>max separation</td><td>{{ '%+.0f'|format(m.max_separation or 0) }}°</td></tr>
+      <tr><td>sequence ok</td><td>{{ m.sequence_ok }}</td></tr>
+      {% if m.bat_tracked %}
+        <tr><td>bat angle@contact</td><td>{{ '%+.0f'|format(m.bat_angle_at_contact_deg or 0) }}°</td></tr>
+        <tr><td>on-plane ratio</td><td>{{ '%.2f'|format(m.on_plane_ratio or 0) }}</td></tr>
+      {% endif %}
+    </table>
+  </section>
+</div>
+
+<section class="card">
+  <h3>Findings</h3>
+  {% for f in report.findings %}
+    <div class="finding sev-{{ f.severity }}">
+      <strong>{{ f.flaw }}</strong> <span class="conf">{{ f.confidence }}</span>
+      <div class="muted">{{ f.evidence }}</div>
+      <div class="drill">Drill: {{ f.drill }}</div>
+    </div>
+  {% endfor %}
+</section>
+
+{% if report.coaching %}
+<section class="card">
+  <h3>Coaching report</h3>
+  <pre class="coaching">{{ report.coaching }}</pre>
+</section>
+{% endif %}
+{% endblock %}

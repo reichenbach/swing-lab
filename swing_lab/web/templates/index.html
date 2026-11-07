@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2>Analyze a swing</h2>
+  <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+    <label>Player
+      <input type="text" name="player" placeholder="Player name" required>
+    </label>
+    <label>Swing video (side-on, slow-mo works best)
+      <input type="file" name="video" accept="video/*" required>
+    </label>
+    <label>How was it filmed? (frame rate)
+      <select name="capture_fps">
+        <option value="">Auto-detect (use only if unsure)</option>
+        <option value="240">240 fps slow-mo</option>
+        <option value="120">120 fps slow-mo</option>
+        <option value="60">60 fps</option>
+        <option value="30">30 fps (regular video)</option>
+      </select>
+    </label>
+    <p class="muted">Phone slow-mo often mislabels its frame rate — picking the
+      real one keeps the timing and speed numbers honest.</p>
+    <button type="submit">Upload &amp; analyze</button>
+    <p class="muted">Processing runs the pose model and may take a bit for long clips.</p>
+  </form>
+</section>
+
+<div class="grid">
+  <section class="card">
+    <h2>Players</h2>
+    {% if players %}
+      <ul class="list">
+        {% for p in players %}
+          <li>
+            <a href="{{ url_for('player', name=p.player) }}">{{ p.player }}</a>
+            <span class="muted">{{ p.n }} swing{{ '' if p.n == 1 else 's' }}
+              · last {{ p.last|ts }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No players yet — upload a swing to start.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Recent swings</h2>
+    {% if swings %}
+      <ul class="list">
+        {% for s in swings %}
+          <li>
+            <a href="{{ url_for('swing', swing_id=s.id) }}">#{{ s.id }} — {{ s.player }}</a>
+            <span class="muted">{{ s.created_at|ts }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">Nothing analyzed yet.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

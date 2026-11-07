@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ name }} — swing_lab{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('index') }}">← all players</a>
+<h2>{{ name }}</h2>
+
+{% if progress %}
+<section class="card">
+  <h3>Progress (baseline → latest)</h3>
+  <table class="progress">
+    <tr><th>Metric</th><th>From</th><th>To</th><th>Δ</th><th></th></tr>
+    {% for d in progress %}
+      <tr class="v-{{ d.verdict }}">
+        <td>{{ d.label }}</td>
+        <td>{{ '%+.2f'|format(d['from']) }}</td>
+        <td>{{ '%+.2f'|format(d['to']) }}</td>
+        <td>{{ '%+.2f'|format(d.delta) }}</td>
+        <td class="verdict">{{ d.verdict }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+</section>
+{% else %}
+<p class="muted">Upload a second swing to see progress vs baseline.</p>
+{% endif %}
+
+<section class="card">
+  <h3>Swings</h3>
+  <ul class="list">
+    {% for s in history|reverse %}
+      <li>
+        <a href="{{ url_for('swing', swing_id=s.id) }}">#{{ s.id }}</a>
+        <span class="muted">{{ s.created_at|ts }}
+          — attack {{ '%+.0f'|format(s.metrics.attack_angle_deg or 0) }}°,
+          sep {{ '%+.0f'|format(s.metrics.max_separation or 0) }}°</span>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

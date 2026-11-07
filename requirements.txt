@@ -1,0 +1,7 @@
+# swing_lab Phase-0 deps (own venv — does not touch the scouting venv)
+ultralytics>=8.3        # YOLO11 pose; pulls torch + opencv
+opencv-python>=4.9
+matplotlib>=3.7
+numpy>=1.24
+flask>=3.0                 # Phase 3 web app (serve.py)
+requests>=2.31            # optional LLM coaching report (coach.py)

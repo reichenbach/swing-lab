@@ -1,0 +1,19 @@
+# Bat keypoint dataset — Ultralytics POSE format.
+# One class "bat" with 2 keypoints: index 0 = knob, index 1 = tip (barrel end).
+# Two keypoints make the bat a vector, which is what gives us orientation,
+# bat path, and a true attack angle.
+#
+# Fill `path` in after you've labeled and exported (see README.md). Expected
+# layout under that root:
+#   images/train/*.jpg   labels/train/*.txt
+#   images/val/*.jpg     labels/val/*.txt
+
+path: ../data/bat_dataset      # dataset root (edit me)
+train: images/train
+val: images/val
+
+kpt_shape: [2, 3]              # 2 keypoints, each (x, y, visibility)
+flip_idx: [0, 1]              # knob/tip don't swap on horizontal flip
+
+names:
+  0: bat
