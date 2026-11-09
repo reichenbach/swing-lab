@@ -43,13 +43,13 @@ from __future__ import annotations
 
 import numpy as np
 
-from .pose import L_ELBOW, L_WRIST, R_ELBOW, R_WRIST, PoseSequence
+from .pose import L_EAR, L_ELBOW, L_WRIST, NOSE, R_EAR, R_ELBOW, R_WRIST, PoseSequence
 
 # Half-window widths in seconds at strength 1.0.
 HEAD_WINDOW_S = 0.15
 CORE_WINDOW_S = 0.10
 LIMB_WINDOW_S = 0.04
-HEAD_KEYPOINTS = (0, 1, 2, 3, 4)  # nose, eyes, ears
+HEAD_KEYPOINTS = (NOSE, 1, 2, L_EAR, R_EAR)  # nose, eyes, ears
 LIMB_KEYPOINTS = (L_ELBOW, R_ELBOW, L_WRIST, R_WRIST)
 
 # Same confidence cutoff the metrics and overlay use.

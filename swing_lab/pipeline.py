@@ -1,8 +1,9 @@
 """The analysis pipeline as one reusable call.
 
 Both the CLI (analyze.py) and the web app (web/app.py) go through
-`analyze_video()` so there's a single code path: pose -> optional bat/ball
-tracking -> metrics -> diagnosis -> render -> coaching -> serializable report.
+`analyze_video()` so there's a single code path: pose -> keypoint smoothing ->
+optional bat/ball tracking -> metrics -> diagnosis -> render -> coaching ->
+serializable report.
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from .diagnose import VIEWS, Finding, diagnose
 from .metrics import SwingMetrics, compute
 from .overlay import render_plot, render_video
 from .pose import get_backend
+from .smoothing import smooth_sequence
 
 
 # Starting point, not calibrated on real footage: below this share of frames with
@@ -73,7 +75,7 @@ def analyze_video(video: str, out_dir: str, *, pose_model: str = "yolo11n-pose.p
                   contact_frame: int | None = None, render_annotated: bool = True,
                   coach: bool = True, player: str | None = None,
                   capture_fps: float | None = None,
-                  view: str | None = None) -> AnalysisResult:
+                  view: str | None = None, smooth: bool = True) -> AnalysisResult:
     if view is not None and view not in VIEWS:
         raise ValueError(f"view must be one of {sorted(VIEWS)} or None, got {view!r}")
     video = str(video)
@@ -81,7 +83,12 @@ def analyze_video(video: str, out_dir: str, *, pose_model: str = "yolo11n-pose.p
     out.mkdir(parents=True, exist_ok=True)
 
     seq = get_backend("yolo", model=pose_model).estimate(video, capture_fps=capture_fps)
+    # Detection rate comes from the raw estimate, before gap filling can hide misses.
     detected = float((~np.isnan(seq.keypoints[:, 0, 0])).mean()) if seq.n_frames else 0.0
+    # Metrics and the overlay both use the smoothed sequence, so the numbers and
+    # the drawing agree.
+    if smooth:
+        seq = smooth_sequence(seq)
 
     bat_track = ball_track = None
     if bat_model or ball_model:
@@ -100,7 +107,7 @@ def analyze_video(video: str, out_dir: str, *, pose_model: str = "yolo11n-pose.p
     if render_annotated:
         outputs["annotated_video"] = render_video(
             seq, m, video, str(out / "annotated.mp4"),
-            bat_track=bat_track, ball_track=ball_track,
+            bat_track=bat_track, ball_track=ball_track, view=view, smoothed=smooth,
         )
 
     coaching_text = coaching_source = None
@@ -117,6 +124,7 @@ def analyze_video(video: str, out_dir: str, *, pose_model: str = "yolo11n-pose.p
         "player": player,
         "view": view,
         "detected_frac": detected,
+        "smoothing": smooth,
         "warning": warning,
         "metrics": _scalar_metrics(m),
         "findings": [dataclasses.asdict(f) for f in findings],

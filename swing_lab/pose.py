@@ -20,6 +20,7 @@ import numpy as np
 
 # COCO-17 index constants — use these instead of magic numbers everywhere.
 NOSE = 0
+L_EAR, R_EAR = 3, 4
 L_SHOULDER, R_SHOULDER = 5, 6
 L_ELBOW, R_ELBOW = 7, 8
 L_WRIST, R_WRIST = 9, 10

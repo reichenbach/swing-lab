@@ -36,6 +36,8 @@ def main() -> None:
                     help="trained bat keypoint weights (see training/)")
     ap.add_argument("--ball-model", default=None,
                     help="trained ball detector weights (see training/)")
+    ap.add_argument("--no-smooth", action="store_true",
+                    help="use raw per-frame keypoints (skip temporal smoothing)")
     ap.add_argument("--no-video", action="store_true", help="skip annotated-video render")
     ap.add_argument("--player", default=None, help="player name for the coaching report")
     ap.add_argument("--no-coach", action="store_true",
@@ -56,7 +58,7 @@ def main() -> None:
         bat_model=args.bat_model, ball_model=args.ball_model,
         contact_frame=args.contact_frame, render_annotated=not args.no_video,
         coach=not args.no_coach, player=args.player, capture_fps=args.fps,
-        view=args.view,
+        view=args.view, smooth=not args.no_smooth,
     )
     m, findings = result.metrics, result.findings
     print(f"  {m.n_frames} frames @ {m.fps:.0f}fps, athlete detected "
