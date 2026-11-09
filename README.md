@@ -5,8 +5,8 @@ clip of one hitter and it produces an annotated skeleton video, metric plots, a
 JSON report, and a plain-English list of findings with drills.
 
 ```
-video -> pose estimation -> biomechanics metrics -> rules-based diagnosis
-      -> annotated.mp4 + metrics.png + report.json + coaching.md
+video -> pose estimation -> keypoint smoothing -> biomechanics metrics
+      -> rules-based diagnosis -> annotated.mp4 + metrics.png + report.json + coaching.md
 ```
 
 ## Status
@@ -68,6 +68,9 @@ PYTHONPATH=. .venv/bin/python analyze.py data/swing.mp4 --view side
 # Set the true capture rate for phone slow motion
 PYTHONPATH=. .venv/bin/python analyze.py data/swing.mp4 --fps 240
 
+# Use raw per-frame keypoints instead of the smoothed ones
+PYTHONPATH=. .venv/bin/python analyze.py data/swing.mp4 --no-smooth
+
 # Save to a per-player library and compare against that player's baseline
 PYTHONPATH=. .venv/bin/python analyze.py data/swing.mp4 --player Alex --save
 
@@ -99,6 +102,13 @@ no grades.
 
 ## What it measures
 
+Keypoints are smoothed over time before anything is measured or drawn (on by
+default, `--no-smooth` to turn off; `report.json` records which). Short
+detection gaps are filled, and each joint gets a centered, lag-free fit sized in
+seconds. The head gets the widest window and the wrists the narrowest, so the
+head steadies without blunting hand speed through contact. Details are in
+`swing_lab/smoothing.py`.
+
 - Hip and shoulder rotation, and hip-shoulder separation (face-on)
 - Kinematic sequence: whether pelvis, torso, and hands peak in that order
 - Attack angle from a hand-path proxy (side-on)
@@ -106,6 +116,14 @@ no grades.
 - Estimated contact frame, from peak hand speed
 - Hand speed in shoulder-widths per second, which stays comparable across camera
   distances and frame rates
+
+The annotated video shows the skeleton, a fading magenta trace of the hands, a
+dashed plumb line through the starting stance, and a fixed box where the head
+started the swing, with the head's path through contact. The box is sized to the
+head-drift threshold and turns amber or red only on side-on clips. A small panel
+shows live readouts the chosen `--view` supports: hip-shoulder separation in
+degrees face-on, or head stability and hand speed side-on. Nothing is shown in
+inches or mph, because a single uncalibrated camera can't measure them.
 
 ## Known limits
 
